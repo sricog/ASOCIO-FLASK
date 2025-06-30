@@ -12,6 +12,21 @@ import os
 import traceback
 from datetime import datetime
 
+def safe_write_json(data, filename):
+    """Safely write JSON data to file, handling read-only file systems"""
+    # Skip logging on Vercel (read-only file system)
+    if os.environ.get('VERCEL') or os.environ.get('VERCEL_ENV'):
+        print(f"📝 Skipping log file {filename} (Vercel environment)")
+        return False
+
+    try:
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        return True
+    except (OSError, IOError) as e:
+        print(f"⚠️ Warning: Could not write {filename}: {e}")
+        return False
+
 app = Flask(__name__)
 CORS(app, origins=["*"])
 
@@ -48,8 +63,7 @@ def resolver_instancia():
         data = request.get_json()
 
         # LOG 1: Guardar el JSON recibido para depuración
-        with open('log_instancia_recibida.json', 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+        safe_write_json(data, 'log_instancia_recibida.json')
 
         instancia = data.get('instancia', {})
         tiempo_limite = data.get('tiempo_limite', 300)
@@ -123,8 +137,7 @@ def resolver_instancia():
         # LOG 2: Guardar la instancia convertida para el modelo
         from models.modelo_adaptado_web import convertir_instancia_web_a_modelo
         instancia_modelo = convertir_instancia_web_a_modelo(instancia)
-        with open('log_instancia_modelo.json', 'w', encoding='utf-8') as f:
-            json.dump(instancia_modelo, f, indent=2, ensure_ascii=False)
+        safe_write_json(instancia_modelo, 'log_instancia_modelo.json')
 
         # Validar campos requeridos
         campos_requeridos = ['empleados', 'escritorios', 'grupos', 'dias', 'zonas']
@@ -160,12 +173,10 @@ def resolver_instancia():
             )
 
         # LOG 3: Guardar la solución cruda del modelo
-        with open('log_solucion_cruda.json', 'w', encoding='utf-8') as f:
-            json.dump(solucion, f, indent=2, ensure_ascii=False)
+        safe_write_json(solucion, 'log_solucion_cruda.json')
 
         # LOG 4: Guardar la respuesta final enviada al frontend
-        with open('log_respuesta_final.json', 'w', encoding='utf-8') as f:
-            json.dump(solucion, f, indent=2, ensure_ascii=False)
+        safe_write_json(solucion, 'log_respuesta_final.json')
 
         return jsonify(solucion)
 
