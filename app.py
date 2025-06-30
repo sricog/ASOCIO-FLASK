@@ -276,6 +276,9 @@ def generar_solucion_ejemplo(instancia, tiempo_resolucion):
         }
     }
 
+# Vercel deployment configuration
+app.debug = False
+
 if __name__ == '__main__':
     print("🚀 Iniciando ASOCIOAPP...")
     print("📍 Endpoints disponibles:")
