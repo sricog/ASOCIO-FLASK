@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ASOCIOAPP - Optimización de Asignación Híbrida</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --primary: #1A237E;
+      --primary-dark: #0D47A1;
+      --accent: #00B8F4;
+      --accent-light: #4FC3F7;
+      --bg: #F8FAFC;
+      --card: #FFFFFF;
+      --gray-50: #F9FAFB;
+      --gray-100: #F3F4F6;
+      --gray-200: #E5E7EB;
+      --gray-300: #D1D5DB;
+      --gray-400: #9CA3AF;
+      --gray-500: #6B7280;
+      --gray-600: #4B5563;
+      --gray-700: #374151;
+      --gray-800: #1F2937;
+      --text: #111827;
+      --success: #10B981;
+      --success-light: #D1FAE5;
+      --error: #EF4444;
+      --error-light: #FEE2E2;
+      --warning: #F59E0B;
+      --warning-light: #FEF3C7;
+      --info: #3B82F6;
+      --info-light: #DBEAFE;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      --radius: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      line-height: 1.6;
+    }
+    .sidebar {
+      background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: #fff;
+      width: 280px;
+      min-height: 100vh;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      left: 0; top: 0; bottom: 0;
+      box-shadow: var(--shadow-xl);
+      z-index: 1000;
+    }
+    .sidebar-header {
+      padding: 32px 24px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .sidebar-header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin: 0 0 4px 0;
+      letter-spacing: -0.025em;
+      background: linear-gradient(135deg, #fff 0%, var(--accent-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .sidebar-header .subtitle {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      font-weight: 400;
+    }
+    .sidebar-nav {
+      padding: 24px 0;
+      flex: 1;
+    }
+    .nav-item {
+      display: block;
+      padding: 12px 24px;
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+      border-left: 3px solid transparent;
+      margin: 4px 0;
+    }
+    .nav-item:hover {
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      border-left-color: var(--accent);
+    }
+    .nav-item.active {
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      border-left-color: var(--accent);
+    }
+    .nav-item i {
+      width: 20px;
+      margin-right: 12px;
+      opacity: 0.8;
+    }
+    .sidebar-footer {
+      padding: 24px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      font-size: 0.875rem;
+      opacity: 0.7;
+    }
+    .main {
+      margin-left: 280px;
+      width: calc(100% - 280px);
+      min-height: 100vh;
+      background: var(--bg);
+    }
+    .main-header {
+      background: var(--card);
+      border-bottom: 1px solid var(--gray-200);
+      padding: 24px 32px;
+      box-shadow: var(--shadow-sm);
+    }
+    .main-header h2 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-800);
+    }
+    .main-content {
+      padding: 32px;
+      max-width: 1400px;
+    }
+    .section {
+      margin-bottom: 32px;
+    }
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      box-shadow: 0 2px 16px rgba(26,35,126,0.06);
+      padding: 32px;
+      margin-bottom: 24px;
+      transition: box-shadow 0.2s;
+    }
+    .card:hover {
+      box-shadow: 0 6px 32px rgba(26,35,126,0.10);
+    }
+    .metrics {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .metric-card {
+      flex: 1 1 180px;
+      background: linear-gradient(135deg, #e3f2fd 0%, #fff 100%);
+      border-radius: 12px;
+      padding: 24px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 1px 8px rgba(0,184,244,0.08);
+      margin-bottom: 8px;
+      min-width: 160px;
+      transition: box-shadow 0.2s;
+    }
+    .metric-card .icon {
+      font-size: 2.2rem;
+      margin-bottom: 8px;
+      color: var(--accent);
+    }
+    .metric-card .value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .metric-card .label {
+      font-size: 1rem;
+      color: #555;
+      margin-top: 4px;
+    }
+    .drag-drop {
+      border: 2px dashed var(--accent);
+      border-radius: 12px;
+      background: #e3f7fd;
+      padding: 40px 24px;
+      text-align: center;
+      color: var(--primary);
+      font-size: 1.1rem;
+      cursor: pointer;
+      margin-bottom: 18px;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .drag-drop.dragover {
+      background: #b3e5fc;
+      border-color: var(--primary);
+    }
+    .file-info {
+      margin: 10px 0 0 0;
+      color: var(--success);
+      font-weight: 500;
+      font-size: 1rem;
+    }
+    .btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 28px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin: 8px 0;
+      transition: background 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 8px rgba(0,184,244,0.08);
+    }
+    .btn:disabled {
+      background: #bdbdbd;
+      cursor: not-allowed;
+    }
+    .btn:hover:not(:disabled) {
+      background: var(--primary);
+    }
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--gray-200);
+      border-radius: 4px;
+      margin: 18px 0;
+      overflow: hidden;
+      position: relative;
+    }
+    .progress-bar .progress {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--primary));
+      width: 0;
+      transition: width 0.4s;
+    }
+    .table-responsive {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 18px 0;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 8px rgba(26,35,126,0.04);
+    }
+    th, td {
+      padding: 12px 10px;
+      text-align: left;
+    }
+    th {
+      background: #e3f2fd;
+      color: var(--primary);
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+    }
+    tr:nth-child(even) {
+      background: #f4f7fa;
+    }
+    tr:hover {
+      background: #e3f2fd;
+      transition: background 0.2s;
+    }
+    .status {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 16px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin: 0 6px;
+    }
+    .status.success { background: #e8f5e9; color: var(--success);}
+    .status.error { background: #ffebee; color: var(--error);}
+    .status.warning { background: #fffde7; color: var(--warning);}
+    .fade-in {
+      animation: fadeIn 0.7s;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px);}
+      to { opacity: 1; transform: none;}
+    }
+    @media (max-width: 1024px) {
+      .sidebar { width: 240px; }
+      .main { margin-left: 240px; width: calc(100% - 240px); }
+    }
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; width: 100%; }
+      .main-content { padding: 16px; }
+    }
+    .employee-avatars {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      margin-top: 8px;
+    }
+    .employee-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-weight: 600;
+      box-shadow: 0 1px 4px rgba(26,35,126,0.10);
+      border: 2px solid #fff;
+      transition: transform 0.15s;
+    }
+    .employee-avatar:hover {
+      transform: scale(1.12);
+      background: var(--accent);
+      color: #fff;
+      z-index: 2;
+    }
+    .zone {
+      flex: 1;
+      background: var(--gray-100);
+      border-radius: var(--radius);
+      padding: 18px 8px 12px 8px;
+      text-align: center;
+      border: 2px solid transparent;
+      transition: all 0.2s ease;
+      min-width: 120px;
+      margin: 0 4px;
+    }
+    .zone-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-700);
+      margin-bottom: 8px;
+    }
+    .mapa-header {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+    .mapa-label {
+      font-weight: 600;
+      color: var(--primary);
+      font-size: 1.1rem;
+    }
+    .mapa-dia-select {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--gray-300);
+      font-size: 1rem;
+      background: #fff;
+      color: var(--primary);
+      font-weight: 500;
+    }
+    .mapa-leyenda {
+      display: flex;
+      gap: 18px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .mapa-leyenda-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.98rem;
+      color: var(--gray-700);
+    }
+    .mapa-leyenda-bola {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: inline-block;
+      border: 2px solid #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .mapa-zonas {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 32px;
+      justify-content: flex-start;
+    }
+    .mapa-zona {
+      background: var(--gray-50);
+      border: 2px solid var(--primary);
+      border-radius: 16px;
+      padding: 18px 24px 24px 24px;
+      min-width: 220px;
+      max-width: 320px;
+      flex: 1 1 220px;
+      box-shadow: 0 2px 12px rgba(26,35,126,0.06);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: box-shadow 0.2s;
+    }
+    .mapa-zona:hover {
+      box-shadow: 0 6px 24px rgba(26,35,126,0.12);
+    }
+    .mapa-zona-titulo {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 12px;
+      letter-spacing: 0.02em;
+    }
+
+    /* Estilos mejorados para el mapa y cohesión */
+    .tab[data-tab="mapa"] {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .tab[data-tab="cohesion"] {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .tab[data-tab="mapa"].active,
+    .tab[data-tab="cohesion"].active {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    /* Mejorar la visualización de cohesión */
+    .proximity-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 16px rgba(26,35,126,0.06);
+      border-left: 4px solid var(--accent);
+      transition: all 0.3s ease;
+    }
+
+    .proximity-card:hover {
+      box-shadow: 0 6px 32px rgba(26,35,126,0.12);
+      transform: translateY(-2px);
+    }
+
+    .proximity-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .proximity-title {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .badge {
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-success {
+      background: var(--success-light);
+      color: var(--success);
+    }
+
+    .badge-error {
+      background: var(--error-light);
+      color: var(--error);
+    }
+
+    /* Estilos mejorados para las pestañas */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--gray-200);
+      margin-bottom: 24px;
+      overflow-x: auto;
+      gap: 4px;
+      padding: 0 4px;
+    }
+    .tab {
+      padding: 14px 20px;
+      border: 2px solid transparent;
+      background: var(--gray-50);
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--gray-600);
+      border-radius: 12px 12px 0 0;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+      font-size: 0.95rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .tab:hover {
+      color: var(--primary);
+      background: var(--gray-100);
+      transform: translateY(-2px);
+    }
+    .tab.active {
+      color: #fff;
+      border-bottom-color: transparent;
+      background: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(26,35,126,0.2);
+    }
+        .tab i {
+      margin-right: 8px;
+      font-size: 1rem;
+    }
+
+    /* Estilos para el contenido de las pestañas */
+    .tab-content {
+      display: none;
+      animation: fadeInUp 0.4s ease-out;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .mapa-puestos {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: center;
+    }
+    .mapa-puesto {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: box-shadow 0.2s, border-color 0.2s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+      cursor: pointer;
+    }
+    .mapa-puesto:hover {
+      border-color: var(--accent);
+      box-shadow: 0 2px 8px rgba(0,184,244,0.12);
+      z-index: 2;
+    }
+    .mapa-puesto-libre {
+      color: var(--gray-400);
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .mapa-bola {
+      position: absolute;
+      top: -7px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+      transition: background 0.2s;
+      z-index: 3;
+    }
+    .mapa-tooltip {
+      position: absolute;
+      bottom: 110%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #fff;
+      color: var(--primary);
+      padding: 8px 14px;
+      border-radius: 8px;
+      box-shadow: 0 2px 12px rgba(26,35,126,0.10);
+      font-size: 0.98rem;
+      font-weight: 500;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.18s;
+      z-index: 10;
+    }
+    .mapa-puesto:hover .mapa-tooltip,
+    .mapa-bola:hover .mapa-tooltip {
+      opacity: 1;
+    }
+    @media (max-width: 900px) {
+      .mapa-zonas { flex-direction: column; gap: 18px; }
+      .mapa-zona { min-width: 180px; max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1>ASOCIOAPP</h1>
+      <div class="subtitle">Optimización de Asignación Híbrida</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#cargar" class="nav-item active" data-section="cargar">
+        <i class="fas fa-upload"></i>
+        Cargar Instancia
+      </a>
+      <a href="#resultados" class="nav-item" data-section="resultados">
+        <i class="fas fa-chart-line"></i>
+        Resultados
+      </a>
+      <a href="#reportes" class="nav-item" data-section="reportes">
+        <i class="fas fa-file-alt"></i>
+        Reportes
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div><strong>ASOCIO</strong></div>
+      <div>Student Challenge '25</div>
+    </div>
+  </aside>
+  <!-- Main Content -->
+  <main class="main">
+    <div class="main-header">
+      <h2 id="page-title">Carga de Instancia</h2>
+    </div>
+    <div class="main-content">
+      <!-- Sección: Cargar Instancia -->
+      <section id="cargar" class="content-section active">
+        <div class="card">
+          <div class="card-header">
+            <h3><i class="fas fa-cloud-upload-alt"></i> Cargar Archivo de Instancia</h3>
+          </div>
+          <div class="card-body">
+            <div id="dropzone" class="drag-drop-zone">
+              <div class="drag-drop-icon">
+                <i class="fas fa-file-upload"></i>
+              </div>
+              <div class="drag-drop-text">Arrastra tu archivo JSON aquí</div>
+              <div class="drag-drop-subtext">o haz clic para seleccionar</div>
+              <input type="file" id="fileInput" accept=".json" style="display:none;">
+            </div>
+            <div id="file-info" style="display:none;" class="notification success">
+              <i class="fas fa-check-circle"></i>
+              <span id="file-name"></span>
+            </div>
+            <div style="margin-top: 24px;">
+              <button class="btn btn-primary" id="solveBtn" disabled>
+                <i class="fas fa-rocket"></i>
+                Resolver Instancia
+              </button>
+            </div>
+            <div id="progress-container" style="display:none; margin-top: 24px;">
+              <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+              </div>
+              <div style="text-align: center; margin-top: 8px; color: var(--gray-600);">
+                <span id="progress-text">Procesando...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- Sección: Resultados -->
+      <section id="resultados" class="content-section" style="display:none;">
+        <!-- Dashboard de Métricas -->
+        <div class="metrics-grid" id="metrics-grid"></div>
+
+        <!-- Encabezado de Visualizaciones Principales -->
+        <div class="card" style="background: linear-gradient(135deg, #e3f2fd 0%, #fff 100%); border-left: 4px solid var(--primary); margin-bottom: 24px;">
+          <div class="card-body" style="padding: 20px 32px;">
+            <h3 style="margin: 0; color: var(--primary); font-size: 1.3rem; font-weight: 600;">
+              <i class="fas fa-eye" style="margin-right: 12px; color: var(--accent);"></i>
+              Visualizaciones Principales
+            </h3>
+            <p style="margin: 8px 0 0 0; color: var(--gray-600); font-size: 1rem;">
+              Explora el mapa de asignaciones y la cohesión de equipos para entender mejor la distribución de empleados
+            </p>
+          </div>
+        </div>
+
+        <!-- Tabs de Resultados -->
+        <div class="card">
+          <div class="tabs" id="results-tabs">
+            <button class="tab active" data-tab="mapa">
+              <i class="fas fa-th-large"></i>
+              Mapa de Asignaciones
+            </button>
+            <button class="tab" data-tab="cohesion">
+              <i class="fas fa-layer-group"></i>
+              Cohesión de Equipos
+            </button>
+            <button class="tab" data-tab="resumen">
+              <i class="fas fa-chart-pie"></i>
+              Resumen
+            </button>
+            <button class="tab" data-tab="horarios">
+              <i class="fas fa-calendar-alt"></i>
+              Horarios
+            </button>
+            <button class="tab" data-tab="asignacion">
+              <i class="fas fa-desktop"></i>
+              Asignación
+            </button>
+            <button class="tab" data-tab="reuniones">
+              <i class="fas fa-users"></i>
+              Reuniones
+            </button>
+          </div>
+          <!-- Contenido de las pestañas -->
+          <div class="tab-content active" id="mapa-tab">
+            <div class="card-body">
+              <div class="mapa-header">
+                <label for="mapa-dia-select" class="mapa-label">Día:</label>
+                <select id="mapa-dia-select" class="mapa-dia-select"></select>
+              </div>
+              <div class="mapa-leyenda" id="mapa-leyenda"></div>
+              <div class="mapa-zonas" id="mapa-zonas"></div>
+            </div>
+          </div>
+          <div class="tab-content" id="horarios-tab">
+            <div class="card-body">
+              <div class="table-container">
+                <div class="table-header">
+                  <h4 class="table-title">Horarios de Empleados</h4>
+                  <div class="table-controls">
+                    <input type="text" class="search-input" placeholder="Buscar empleado..." id="horarios-search">
+                  </div>
+                </div>
+                <div class="table-responsive">
+                  <table class="table" id="horarios-table">
+                    <thead>
+                      <tr>
+                        <th>Empleado ID</th>
+                        <th>Días Presenciales</th>
+                        <th>Total Días</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tab-content" id="asignacion-tab">
+            <div class="card-body">
+              <div class="table-container">
+                <div class="table-header">
+                  <h4 class="table-title">Asignación de Escritorios</h4>
+                  <div class="table-controls">
+                    <input type="text" class="search-input" placeholder="Buscar..." id="asignacion-search">
+                  </div>
+                </div>
+                <div class="table-responsive">
+                  <table class="table" id="asignacion-table">
+                    <thead>
+                      <tr>
+                        <th>Empleado ID</th>
+                        <th>Día</th>
+                        <th>Escritorio</th>
+                        <th>Zona</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tab-content" id="reuniones-tab">
+            <div class="card-body">
+              <div class="table-container">
+                <div class="table-header">
+                  <h4 class="table-title">Reuniones de Equipo</h4>
+                </div>
+                <div class="table-responsive">
+                  <table class="table" id="reuniones-table">
+                    <thead>
+                      <tr>
+                        <th>Grupo ID</th>
+                        <th>Días de Reunión</th>
+                        <th>Total Días</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+                    <div class="tab-content" id="cohesion-tab">
+            <div class="card-body">
+              <div class="cohesion-grid" id="cohesion-grid"></div>
+            </div>
+          </div>
+          <div class="tab-content" id="mapa-tab">
+            <div class="card-body">
+              <div class="mapa-header">
+                <label for="mapa-dia-select" class="mapa-label">Día:</label>
+                <select id="mapa-dia-select" class="mapa-dia-select"></select>
+              </div>
+              <div class="mapa-leyenda" id="mapa-leyenda"></div>
+              <div class="mapa-zonas" id="mapa-zonas"></div>
+            </div>
+          </div>
+          <div class="tab-content" id="resumen-tab">
+            <div class="card-body">
+              <div class="table-container">
+                <div class="table-header">
+                  <h4 class="table-title">Validación de la Solución</h4>
+                </div>
+                <div class="table-responsive">
+                  <table class="table" id="validation-table">
+                    <thead>
+                      <tr>
+                        <th>Métrica</th>
+                        <th>Valor</th>
+                        <th>Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- Sección: Reportes -->
+      <section id="reportes" class="content-section" style="display:none;">
+        <div class="card">
+          <div class="card-header">
+            <h3><i class="fas fa-download"></i> Descargar Reporte</h3>
+          </div>
+          <div class="card-body">
+            <p style="color: var(--gray-600); margin-bottom: 24px;">
+              Descarga el reporte completo de la optimización en formato JSON para análisis posterior.
+            </p>
+            <button class="btn btn-accent" id="downloadBtn" disabled>
+              <i class="fas fa-file-download"></i>
+              Descargar Reporte JSON
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+  <script>
+    // Variables globales
+    let instanceData = null;
+    let solutionData = null;
+    let currentSection = 'cargar';
+
+    // Elementos DOM
+    const navItems = document.querySelectorAll('.nav-item');
+    const contentSections = document.querySelectorAll('.content-section');
+    const pageTitle = document.getElementById('page-title');
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('file-info');
+    const fileName = document.getElementById('file-name');
+    const solveBtn = document.getElementById('solveBtn');
+    const progressContainer = document.getElementById('progress-container');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const metricsGrid = document.getElementById('metrics-grid');
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    // Navegación entre secciones
+    navItems.forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const section = item.dataset.section;
+        showSection(section);
+      });
+    });
+    function showSection(section) {
+      navItems.forEach(item => item.classList.remove('active'));
+      document.querySelector(`[data-section="${section}"]`).classList.add('active');
+      contentSections.forEach(s => s.style.display = 'none');
+      document.getElementById(section).style.display = 'block';
+      const titles = {
+        'cargar': 'Carga de Instancia',
+        'resultados': 'Resultados de la Optimización',
+        'reportes': 'Reportes'
+      };
+      pageTitle.textContent = titles[section];
+      currentSection = section;
+    }
+
+    // Tabs de resultados
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabName = tab.dataset.tab;
+        showTab(tabName);
+      });
+    });
+    function showTab(tabName) {
+      tabs.forEach(t => t.classList.remove('active'));
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+      tabContents.forEach(tc => tc.classList.remove('active'));
+      document.getElementById(`${tabName}-tab`).classList.add('active');
+    }
+
+    // Drag & Drop de archivo
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('dragover');
+    });
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', (e) => {
+      handleFile(e.target.files[0]);
+    });
+    function handleFile(file) {
+      if (!file || !file.name.endsWith('.json')) {
+        showNotification('Por favor selecciona un archivo JSON válido.', 'error');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          instanceData = JSON.parse(e.target.result);
+          fileInfo.style.display = 'block';
+          fileName.textContent = `Archivo cargado: ${file.name}`;
+          solveBtn.disabled = false;
+          showNotification('Archivo cargado con éxito.', 'success');
+        } catch {
+          showNotification('El archivo no es un JSON válido.', 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // Resolución de instancia
+    solveBtn.addEventListener('click', async () => {
+      if (!instanceData) return;
+      solveBtn.disabled = true;
+      progressContainer.style.display = 'block';
+      progressFill.style.width = '0%';
+      progressText.textContent = 'Iniciando optimización...';
+      showNotification('Resolviendo instancia...', 'warning');
+      setTimeout(() => {
+        progressFill.style.width = '30%';
+        progressText.textContent = 'Procesando datos...';
+      }, 500);
+      setTimeout(() => {
+        progressFill.style.width = '60%';
+        progressText.textContent = 'Optimizando asignación...';
+      }, 1500);
+      try {
+        const response = await fetch('/resolver-instancia', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ instancia: instanceData })
+        });
+        if (!response.ok) throw new Error('Error en el servidor');
+        solutionData = await response.json();
+        progressFill.style.width = '100%';
+        progressText.textContent = '¡Optimización completada!';
+        showNotification('Instancia resuelta con éxito.', 'success');
+        setTimeout(() => {
+          showSection('resultados');
+          renderResults();
+          downloadBtn.disabled = false;
+        }, 1000);
+      } catch (error) {
+        showNotification('Error al resolver la instancia: ' + error.message, 'error');
+      } finally {
+        setTimeout(() => {
+          progressContainer.style.display = 'none';
+          progressFill.style.width = '0%';
+          solveBtn.disabled = false;
+        }, 2000);
+      }
+    });
+
+    // Renderizado de resultados
+    function renderResults() {
+      if (!solutionData) return;
+      renderMetrics();
+      renderValidationTable();
+      renderHorariosTable();
+      renderAsignacionTable();
+      renderReunionesTable();
+      renderCohesionGrid();
+      renderMapaAsignaciones();
+    }
+    function renderMetrics() {
+      const metrics = [
+        {
+          icon: 'fas fa-target',
+          label: 'Valor Objetivo',
+          value: solutionData.valor_objetivo || 0,
+          type: 'primary',
+          change: '+12%'
+        },
+        {
+          icon: 'fas fa-users',
+          label: 'Empleados Asignados',
+          value: `${solutionData.empleados_asignados || 0}/${solutionData.total_empleados || 0}`,
+          type: 'success'
+        },
+        {
+          icon: 'fas fa-star',
+          label: 'Tasa de Satisfacción',
+          value: `${((solutionData.tasa_satisfaccion || 0) * 100).toFixed(1)}%`,
+          type: 'accent',
+          progress: solutionData.tasa_satisfaccion || 0
+        },
+        {
+          icon: 'fas fa-clock',
+          label: 'Tiempo de Resolución',
+          value: `${solutionData.tiempo_resolucion || 0}s`,
+          type: 'warning'
+        }
+      ];
+      metricsGrid.innerHTML = metrics.map(metric => `
+        <div class="metric-card">
+          <div class="metric-header">
+            <div class="metric-icon ${metric.type}">
+              <i class="${metric.icon}"></i>
+            </div>
+            ${metric.change ? `<span class="metric-change positive">${metric.change}</span>` : ''}
+          </div>
+          <div class="metric-value">${metric.value}</div>
+          <div class="metric-label">${metric.label}</div>
+          ${metric.progress ? `
+            <div class="progress-container">
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: ${metric.progress * 100}%"></div>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+    }
+    function renderValidationTable() {
+      const validation = solutionData.validacion || {};
+      const tbody = document.querySelector('#validation-table tbody');
+      const rows = [
+        ['Estado', solutionData.estado || 'N/A', 'success'],
+        ['Errores', validation.errores || 0, validation.errores > 0 ? 'error' : 'success'],
+        ['Advertencias', validation.advertencias || 0, validation.advertencias > 0 ? 'warning' : 'success'],
+        ['Detalles', validation.detalles?.length || 0, 'info']
+      ];
+      tbody.innerHTML = rows.map(([label, value, type]) => `
+        <tr>
+          <td>${label}</td>
+          <td>${value}</td>
+          <td><span class="badge badge-${type}">${type}</span></td>
+        </tr>
+      `).join('');
+    }
+    function renderHorariosTable() {
+      const horarios = solutionData.horarios_empleados || [];
+      const tbody = document.querySelector('#horarios-table tbody');
+      const grupoColorMap = solutionData.mapeo_colores_grupos || {};
+
+      tbody.innerHTML = horarios.map(horario => {
+        // Buscar grupo del empleado
+        let grupo = null;
+        if (solutionData.empleados_detalle && Array.isArray(solutionData.empleados_detalle)) {
+          const emp = solutionData.empleados_detalle.find(e => String(e.id) === String(horario.empleado_id));
+          if (emp) grupo = emp.grupo;
+        }
+
+        const colorGrupo = grupo !== null && grupoColorMap[grupo] ? grupoColorMap[grupo] : '#1A237E';
+
+        return `
+          <tr>
+            <td>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 12px; height: 12px; border-radius: 50%; background: ${colorGrupo}; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
+                ${horario.empleado_id}
+                ${grupo !== null ? `<span style="color: ${colorGrupo}; font-weight: 600; font-size: 0.9em;">(G${grupo})</span>` : ''}
+              </div>
+            </td>
+            <td>${horario.dias_presenciales.join(', ')}</td>
+            <td>${horario.dias_presenciales.length}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+    function renderAsignacionTable() {
+      const asignaciones = solutionData.asignacion_escritorios || [];
+      const tbody = document.querySelector('#asignacion-table tbody');
+      const grupoColorMap = solutionData.mapeo_colores_grupos || {};
+
+      tbody.innerHTML = asignaciones.map(asignacion => {
+        // Buscar grupo del empleado
+        let grupo = null;
+        if (solutionData.empleados_detalle && Array.isArray(solutionData.empleados_detalle)) {
+          const emp = solutionData.empleados_detalle.find(e => String(e.id) === String(asignacion.empleado_id));
+          if (emp) grupo = emp.grupo;
+        }
+
+        const colorGrupo = grupo !== null && grupoColorMap[grupo] ? grupoColorMap[grupo] : '#1A237E';
+
+        return `
+          <tr>
+            <td>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 12px; height: 12px; border-radius: 50%; background: ${colorGrupo}; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
+                ${asignacion.empleado_id}
+                ${grupo !== null ? `<span style="color: ${colorGrupo}; font-weight: 600; font-size: 0.9em;">(G${grupo})</span>` : ''}
+              </div>
+            </td>
+            <td>${asignacion.dia}</td>
+            <td>${asignacion.escritorio_id}</td>
+            <td>${asignacion.zona}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+    function renderReunionesTable() {
+      const reuniones = solutionData.reuniones_equipo || [];
+      const tbody = document.querySelector('#reuniones-table tbody');
+      tbody.innerHTML = reuniones.map(reunion => `
+        <tr>
+          <td>${reunion.grupo_id}</td>
+          <td>${reunion.dias_reunion.join(', ')}</td>
+          <td>${reunion.dias_reunion.length}</td>
+        </tr>
+      `).join('');
+    }
+    function renderCohesionGrid() {
+      const grid = document.getElementById('cohesion-grid');
+      grid.innerHTML = '';
+      if (!solutionData || !solutionData.reuniones_equipo || !solutionData.asignacion_escritorios) {
+        grid.innerHTML = '<div class="loading">No hay datos de cohesión disponibles</div>';
+        return;
+      }
+
+      const grupoColorMap = solutionData.mapeo_colores_grupos || {};
+
+      // Obtener zonas únicas y ordenarlas
+      const zonas = Array.from(new Set(solutionData.asignacion_escritorios.map(a => a.zona))).sort();
+
+      // Mapear reuniones por grupo y día
+      solutionData.reuniones_equipo.forEach(reunion => {
+        const grupo = reunion.grupo_id;
+        const colorGrupo = grupoColorMap[grupo] || '#1A237E';
+
+        reunion.dias_reunion.forEach(dia => {
+          // Empleados del grupo en ese día
+          const empleadosEnDia = solutionData.asignacion_escritorios.filter(a => a.dia === dia && perteneceAGrupo(a.empleado_id, grupo));
+          // Agrupar por zona
+          const empleadosPorZona = {};
+          zonas.forEach(z => empleadosPorZona[z] = []);
+          empleadosEnDia.forEach(a => empleadosPorZona[a.zona]?.push(a));
+          // ¿Todos en la misma zona?
+          const zonasOcupadas = zonas.filter(z => empleadosPorZona[z].length > 0);
+          const concentrado = zonasOcupadas.length === 1;
+
+          // Renderizar tarjeta
+          grid.innerHTML += `
+            <div class="proximity-card" style="margin-bottom:18px;">
+              <div class="proximity-header">
+                <h4 class="proximity-title">
+                  <i class='fas fa-bullseye' style='color:${colorGrupo};margin-right:8px;'></i>
+                  Grupo ${grupo} - Día ${dia}
+                </h4>
+                <span class="badge badge-${concentrado ? 'success' : 'error'}">${concentrado ? 'Concentrado' : 'Disperso'}</span>
+              </div>
+              <div class="zone-visualization">
+                ${zonas.map(zona => `
+                  <div class="zone" style="background:${empleadosPorZona[zona].length ? colorGrupo + '15' : 'var(--gray-100)'};min-width:140px;border-color:${empleadosPorZona[zona].length ? colorGrupo : 'var(--gray-200)'};">
+                    <div class="zone-title" style="color:${empleadosPorZona[zona].length ? colorGrupo : 'var(--gray-700)'};">${zona}</div>
+                    <div class="employee-avatars" style="justify-content:center;">
+                      ${empleadosPorZona[zona].length ? empleadosPorZona[zona].map(a => `
+                        <div class="employee-avatar" title="Empleado ${a.empleado_id} | Escritorio ${a.escritorio_id}" style="background:${colorGrupo};">
+                          <div style='font-size:0.95em;font-weight:700;line-height:1;'>${a.empleado_id}</div>
+                          <div style='font-size:0.75em;line-height:1;margin-top:1px;'>${a.escritorio_id}</div>
+                        </div>
+                      `).join('') : '<span style=\'color:var(--gray-400);font-size:1.1em\'>-</span>'}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        });
+      });
+
+      // Helper para saber si un empleado pertenece a un grupo
+      function perteneceAGrupo(emp_id, grupo_id) {
+        // Buscar en empleados_detalle si existe
+        if (solutionData.empleados_detalle) {
+          const emp = solutionData.empleados_detalle.find(e => e.id == emp_id);
+          return emp && emp.grupo == grupo_id;
+        }
+        // Si no, asumir todos los empleados están en el grupo (fallback)
+        return true;
+      }
+    }
+
+    // Búsqueda en tablas
+    document.getElementById('horarios-search').addEventListener('input', (e) => {
+      filterTable('horarios-table', e.target.value);
+    });
+    document.getElementById('asignacion-search').addEventListener('input', (e) => {
+      filterTable('asignacion-table', e.target.value);
+    });
+    function filterTable(tableId, searchTerm) {
+      const table = document.getElementById(tableId);
+      const rows = table.querySelectorAll('tbody tr');
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm.toLowerCase()) ? '' : 'none';
+      });
+    }
+
+    // Descargar reporte
+    downloadBtn.addEventListener('click', () => {
+      if (!solutionData) return;
+      const blob = new Blob([JSON.stringify(solutionData, null, 2)], {
+        type: 'application/json'
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `asocioapp_reporte_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showNotification('Reporte descargado con éxito.', 'success');
+    });
+
+    // Notificaciones
+    function showNotification(message, type) {
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+        ${message}
+      `;
+      document.body.appendChild(notification);
+      setTimeout(() => {
+        notification.remove();
+      }, 5000);
+    }
+
+    // --- Mapa de Asignaciones ---
+    function renderMapaAsignaciones() {
+      // Logs de depuración para ver los datos en consola
+      console.log('Zonas:', solutionData.zonas);
+      console.log('Escritorios detalle:', solutionData.escritorios_detalle);
+      console.log('Asignaciones:', solutionData.asignacion_escritorios);
+      console.log('Mapeo colores grupos:', solutionData.mapeo_colores_grupos);
+
+      const zonas = solutionData.zonas || [];
+      const puestosPorZona = {};
+      // Mapear escritorios a zonas
+      (solutionData.escritorios_detalle || []).forEach(e => {
+        if (!puestosPorZona[e.zona]) puestosPorZona[e.zona] = [];
+        puestosPorZona[e.zona].push(e.id);
+      });
+
+      // Usar colores del backend o fallback
+      const grupoColorMap = solutionData.mapeo_colores_grupos || {};
+      const grupos = Object.keys(grupoColorMap).length || 0;
+
+      // Leyenda
+      const leyenda = document.getElementById('mapa-leyenda');
+      leyenda.innerHTML = '';
+      Object.keys(grupoColorMap).forEach(grupo => {
+        leyenda.innerHTML += `
+          <span class="mapa-leyenda-item">
+            <span class="mapa-leyenda-bola" style="background:${grupoColorMap[grupo]}"></span>
+            Grupo ${grupo}
+          </span>
+        `;
+      });
+
+      // Selector de día
+      const dias = solutionData.dias || 5;
+      const diasNombres = ['L', 'Ma', 'Mi', 'J', 'V'];
+      const select = document.getElementById('mapa-dia-select');
+      select.innerHTML = '';
+      for (let i = 1; i <= dias; i++) {
+        select.innerHTML += `<option value="${i}">${diasNombres[i-1] || 'Día '+i}</option>`;
+      }
+
+      // Render inicial
+      let diaActual = 1;
+      select.value = diaActual;
+      select.onchange = () => {
+        diaActual = parseInt(select.value);
+        renderMapaZonas(diaActual);
+      };
+      renderMapaZonas(diaActual);
+
+      function renderMapaZonas(dia) {
+        const cont = document.getElementById('mapa-zonas');
+        cont.innerHTML = '';
+        zonas.forEach(zona => {
+          cont.innerHTML += `
+            <div class="mapa-zona">
+              <div class="mapa-zona-titulo">${zona}</div>
+              <div class="mapa-puestos" id="mapa-puestos-${zona}"></div>
+            </div>
+          `;
+        });
+
+        // Asignaciones de ese día
+        const asignaciones = solutionData.asignacion_escritorios.filter(a => a.dia === dia);
+
+        zonas.forEach(zona => {
+          const puestos = puestosPorZona[zona] || [];
+          const divPuestos = document.getElementById(`mapa-puestos-${zona}`);
+          puestos.forEach(puesto => {
+            // ¿Está ocupado?
+            const asign = asignaciones.find(a => a.escritorio_id === puesto);
+            if (asign) {
+              // Buscar grupo del empleado
+              let grupo = null, nombre = asign.empleado_id;
+              // 1. Buscar en empleados_detalle si existe
+              if (solutionData.empleados_detalle && Array.isArray(solutionData.empleados_detalle)) {
+                const emp = solutionData.empleados_detalle.find(e => String(e.id) === String(asign.empleado_id));
+                if (emp) grupo = emp.grupo;
+                if (emp && emp.nombre) nombre = emp.nombre;
+              }
+              // 2. Si no, buscar en Employees_G (IDs tipo 'E11')
+              if (grupo === null && solutionData.Employees_G) {
+                for (let g = 0; g < grupos; g++) {
+                  const groupKey = `G${g}`;
+                  if (solutionData.Employees_G[groupKey] && solutionData.Employees_G[groupKey].includes(`E${asign.empleado_id}`)) {
+                    grupo = g;
+                    break;
+                  }
+                }
+              }
+
+              // Obtener color del grupo
+              const colorGrupo = grupo !== null && grupoColorMap[grupo] ? grupoColorMap[grupo] : '#1A237E';
+
+              divPuestos.innerHTML += `
+                <div class="mapa-puesto" style="position:relative;">
+                  <span class="mapa-bola" style="background:${colorGrupo};" title="Empleado ${nombre}">
+                    ${asign.empleado_id}
+                    <span class="mapa-tooltip">
+                      Empleado: <b>${nombre}</b><br>
+                      Grupo: <b>${grupo !== null ? grupo : '-'}</b>
+                    </span>
+                  </span>
+                  <span class="mapa-puesto-libre" style="opacity:0.3;">${puesto}</span>
+                </div>
+              `;
+            } else {
+              divPuestos.innerHTML += `
+                <div class="mapa-puesto" style="position:relative;">
+                  <span class="mapa-puesto-libre">${puesto}</span>
+                  <span class="mapa-tooltip">Libre</span>
+                </div>
+              `;
+            }
+          });
+        });
+      }
+    }
+  </script>
+</body>
+</html>
