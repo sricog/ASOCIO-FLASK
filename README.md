@@ -13,6 +13,7 @@ Una aplicación web completa desarrollada en Flask para resolver problemas de op
 
 ## 📋 Requisitos
 
+- Gurobi (Licencia)
 - Flask
 - PuLP (para optimización)
 - Flask-CORS
