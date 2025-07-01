@@ -180,6 +180,36 @@ def convertir_solucion_modelo_a_web(solucion_modelo: Dict, instancia_web: Dict, 
     total_empleados = len(solucion_modelo['employee_schedule'])
     tasa_satisfaccion = calcular_tasa_satisfaccion(solucion_modelo, instancia_web)
 
+    # Calcular métrica de cohesión de equipos
+    # Inspirado en el ejemplo proporcionado por el usuario
+    total = 0
+    cohesion = 0
+    for grupo_id, dias_reunion in solucion_modelo['team_meetings'].items():
+        if grupo_id not in instancia_modelo['Employees_G']:
+            continue
+        empleados_grupo = instancia_modelo['Employees_G'][grupo_id]
+        for dia in dias_reunion:
+            # dia es string tipo 'L', 'Ma', ... pero en la web lo convertimos a número
+            if isinstance(dia, int):
+                dia_str = dias_mapping.get(dia, str(dia))
+            else:
+                dia_str = dia
+            zonas_count = {}
+            members_present = []
+            for emp_id in empleados_grupo:
+                if emp_id in solucion_modelo['desk_assignments'] and dia_str in solucion_modelo['desk_assignments'][emp_id]:
+                    escritorio = solucion_modelo['desk_assignments'][emp_id][dia_str]
+                    zona = determinar_zona_escritorio(escritorio, instancia_web, instancia_modelo)
+                    if zona not in zonas_count:
+                        zonas_count[zona] = []
+                    zonas_count[zona].append(emp_id)
+                    members_present.append(emp_id)
+            for zone, emps in zonas_count.items():
+                total += 1
+                if len(emps) >= 2:
+                    cohesion += 1
+    tasa_cohesion = (cohesion / total) if total > 0 else 0.0
+
     # Determinar estado
     estado = "Optimo" if solucion_modelo['status'] == 'Optimal' else "Factible"
 
@@ -220,6 +250,7 @@ def convertir_solucion_modelo_a_web(solucion_modelo: Dict, instancia_web: Dict, 
         "empleados_asignados": empleados_asignados,
         "total_empleados": total_empleados,
         "tasa_satisfaccion": round(tasa_satisfaccion, 3),
+        "tasa_cohesion": round(tasa_cohesion, 3),
         "horarios_empleados": horarios_empleados,
         "asignacion_escritorios": asignacion_escritorios,
         "reuniones_equipo": reuniones_equipo,

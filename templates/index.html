@@ -1045,6 +1045,13 @@
           progress: solutionData.tasa_satisfaccion || 0
         },
         {
+          icon: 'fas fa-users-cog',
+          label: 'Cohesión de Equipos',
+          value: `${((solutionData.tasa_cohesion || 0) * 100).toFixed(1)}%`,
+          type: 'info',
+          progress: solutionData.tasa_cohesion || 0
+        },
+        {
           icon: 'fas fa-clock',
           label: 'Tiempo de Resolución',
           value: `${solutionData.tiempo_resolucion || 0}s`,
@@ -1126,6 +1133,7 @@
       const asignaciones = solutionData.asignacion_escritorios || [];
       const tbody = document.querySelector('#asignacion-table tbody');
       const grupoColorMap = solutionData.mapeo_colores_grupos || {};
+      const diasMap = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
 
       tbody.innerHTML = asignaciones.map(asignacion => {
         // Buscar grupo del empleado
@@ -1146,7 +1154,7 @@
                 ${grupo !== null ? `<span style="color: ${colorGrupo}; font-weight: 600; font-size: 0.9em;">(G${grupo})</span>` : ''}
               </div>
             </td>
-            <td>${asignacion.dia}</td>
+            <td>${(() => { let idx = typeof asignacion.dia === 'number' ? asignacion.dia - 1 : parseInt(asignacion.dia) - 1; return diasMap[idx] || asignacion.dia; })()}</td>
             <td>${asignacion.escritorio_id}</td>
             <td>${asignacion.zona}</td>
           </tr>
@@ -1156,10 +1164,11 @@
     function renderReunionesTable() {
       const reuniones = solutionData.reuniones_equipo || [];
       const tbody = document.querySelector('#reuniones-table tbody');
+      const diasMap = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
       tbody.innerHTML = reuniones.map(reunion => `
         <tr>
           <td>${reunion.grupo_id}</td>
-          <td>${reunion.dias_reunion.join(', ')}</td>
+          <td>${reunion.dias_reunion.map(d => { let idx = typeof d === 'number' ? d - 1 : parseInt(d) - 1; return diasMap[idx] || d; }).join(', ')}</td>
           <td>${reunion.dias_reunion.length}</td>
         </tr>
       `).join('');
@@ -1173,6 +1182,7 @@
       }
 
       const grupoColorMap = solutionData.mapeo_colores_grupos || {};
+      const diasMap = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
 
       // Obtener zonas únicas y ordenarlas
       const zonas = Array.from(new Set(solutionData.asignacion_escritorios.map(a => a.zona))).sort();
@@ -1199,7 +1209,7 @@
               <div class="proximity-header">
                 <h4 class="proximity-title">
                   <i class='fas fa-bullseye' style='color:${colorGrupo};margin-right:8px;'></i>
-                  Grupo ${grupo} - Día ${dia}
+                  Grupo ${grupo} - Día ${(() => { let idx = typeof dia === 'number' ? dia - 1 : parseInt(dia) - 1; return diasMap[idx] || dia; })()}
                 </h4>
                 <span class="badge badge-${concentrado ? 'success' : 'error'}">${concentrado ? 'Concentrado' : 'Disperso'}</span>
               </div>

@@ -4,7 +4,7 @@ Una aplicación web completa desarrollada en Flask para resolver problemas de op
 
 ## 🚀 Características
 
-- **Optimización Híbrida**: Sistema que combina trabajo presencial y remoto
+- **Optimización Híbrida**: Sistema que combina trabajo presencial y remoto, utilizando un modelo lexicográfico.
 - **Asignación Inteligente**: Algoritmo de optimización para asignar empleados a escritorios
 - **Gestión de Grupos**: Coordinación de reuniones de equipo
 - **Análisis de Proximidad**: Distribución óptima por zonas
@@ -68,13 +68,14 @@ La aplicación estará disponible en: `http://localhost:5000`
 FlaskDeploy/
 ├── app.py                 # Aplicación principal Flask
 ├── requirements.txt       # Dependencias de Python
-├── README.md             # Documentación
-├── .gitignore           # Archivos a ignorar por Git
-├── models/              # Modelos de optimización
+├── README.md              # Documentación
+├── .gitignore             # Archivos a ignorar por Git
+├── models/                # Modelos de optimización
 │   ├── __init__.py
+│   ├── modelo_adaptado_web.py
 │   ├── lexicographicv1.py
-│   └── modelo_adaptado_web.py
-├── templates/           # Plantillas HTML
+│   └── work_assignment_model_past.py
+├── templates/             # Plantillas HTML
 │   └── index.html
-└── venv/               # Entorno virtual (no incluido en Git)
+└── __init__.py
 ```
